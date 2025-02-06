@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
+import GoogleLoginButton from "@/components/custom/GoogleLoginButton";
 
 const formSchema = yup
   .object({
@@ -34,14 +35,14 @@ const Signup = () => {
     <div className="lg:p-8 flex flex-col">
       <Link
         className="ml-auto text-sidechick-default font-medium hover:text-orange-600 hover:transition-all"
-        href={"/auth/login"}
+        href={"/auth/signin"}
       >
         Login
       </Link>
 
       <div className="p-6 lg:min-w-[418px] mx-auto mt-20 flex flex-col gap-6">
         <div className="flex flex-col text-center gap-1">
-          <h2 className="text-[24px] font-semibold">Create an account</h2>
+          <h2 className="text-[24px] font-semibold">Create an Account</h2>
           <p className="text-sm text-gray-400">
             Enter your email below to create your account
           </p>
@@ -54,7 +55,11 @@ const Signup = () => {
           {/* firstname */}
           <div className="flex flex-col gap-[6px]">
             <Label className="text-sm">Firstname</Label>
-            <Input className="w-full" {...register("firstName")} />
+            <Input
+              placeholder="Jhon"
+              className="w-full"
+              {...register("firstName")}
+            />
             <p className="text-xs font-medium text-red-600">
               {errors.firstName?.message}
             </p>
@@ -62,7 +67,11 @@ const Signup = () => {
           {/* lastname */}
           <div className="flex flex-col gap-[6px]">
             <Label className="text-sm">Lastname</Label>
-            <Input className="w-full" {...register("lastName")} />
+            <Input
+              placeholder="Doe"
+              className="w-full"
+              {...register("lastName")}
+            />
             <p className="text-xs font-medium text-red-600">
               {errors.lastName?.message}
             </p>
@@ -70,7 +79,12 @@ const Signup = () => {
           {/* email */}
           <div className="flex flex-col gap-[6px]">
             <Label className="text-sm">Email</Label>
-            <Input type="email" className="w-full" {...register("email")} />
+            <Input
+              placeholder="ex. jhondoe@gmail.com"
+              type="email"
+              className="w-full"
+              {...register("email")}
+            />
             <p className="text-xs font-medium text-red-600">
               {errors.email?.message}
             </p>
@@ -80,6 +94,7 @@ const Signup = () => {
             <Label className="text-sm">Password</Label>
             <Input
               type="password"
+              placeholder="***********"
               className="w-full"
               {...register("password")}
             />
@@ -97,9 +112,7 @@ const Signup = () => {
           <Separator className=" flex-1 bg-gray-200" />
         </div>
         <div className="">
-          <Button variant="outline" className="w-full">
-            <Image src={GoogleImage} alt="google-login" /> Google
-          </Button>
+          <GoogleLoginButton />
         </div>
         <div>
           <p className="text-gray-400 leading-6 text-sm text-center">
