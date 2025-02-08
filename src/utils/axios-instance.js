@@ -1,11 +1,18 @@
 import axios from "axios";
 
-export default ({ headers }) => {
-    const parsedHeaders = Object.fromEntries(headers.entries());
+const api = axios.create({
+    baseURL: "http://localhost:8000/api",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    withCredentials: true,
+    timeout: 10000,
 
-    return axios.create({
-        baseURL: "http://localhost:8000",
-        headers: parsedHeaders,
-        withCredentials: true
-    });
-};
+});
+
+
+
+export default api;
+
+
+

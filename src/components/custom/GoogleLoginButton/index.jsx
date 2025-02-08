@@ -5,12 +5,17 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import GoogleImage from "../../../../public/btn-google.svg";
+import { useDispatch } from "react-redux";
+import { googleUserLogin } from "@/redux/features/user/user-slice";
 
 const GoogleLoginButton = () => {
+  const dispatch = useDispatch();
+
   const responseGoogle = async (authResult) => {
     try {
       if (authResult.code) {
         console.log("Code acquired => ", JSON.stringify(authResult));
+        dispatch(googleUserLogin({ auth_code: authResult.code }));
       }
     } catch (error) {
       console.log("Error while requesting Google auth code: " + error.message);

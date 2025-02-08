@@ -30,7 +30,7 @@ const Signin = () => {
   const onSubmit = () => console.log("first");
 
   return (
-    <div className="lg:p-8 flex flex-col">
+    <div className="p-8 flex flex-col w-full">
       <Link
         className="ml-auto text-sidechick-default font-medium hover:text-orange-600 hover:transition-all"
         href={"/auth/signup"}
@@ -38,7 +38,7 @@ const Signin = () => {
         Signup
       </Link>
 
-      <div className="p-6 lg:min-w-[418px] mx-auto mt-20 flex flex-col gap-6">
+      <div className="p-6 min-w-[350px] mx-auto mt-20 flex flex-col gap-6">
         <div className="flex flex-col text-center gap-1">
           <h2 className="text-[24px] font-semibold">Login to Account</h2>
           <p className="text-sm text-gray-400">

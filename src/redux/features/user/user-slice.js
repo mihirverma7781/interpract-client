@@ -1,21 +1,24 @@
 // slices/userSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import apiInstance from "../../../utils/axios-instance";
 
-// api call
-export const fetchUsers = createAsyncThunk(
-    "users/getAllUsers",
-    async (data, {}) => {
-        const response = await axios.get("https://jsonplaceholder.typicode.com/users");
-        
-        return response;
+export const googleUserLogin = createAsyncThunk("user/googleLogin", async (data, thunkAPI) => {
+    try {
+        const response = await apiInstance.post("/auth/google", {
+            auth_code: data.auth_code
+        })
+        console.log("Response: " + JSON.stringify(response));
+        return response.data;
+    } catch (error) {
+        console.log("[Error | user/googleLogin]: ", error);
+        return thunkAPI.rejectWithValue(error.response?.data?.errors || error.message);
     }
-);
+})
 
 const initialState = {
-    users: [],
+    entities: {},
     loading: false,
-    error: "",
+    errors: []
 };
 
 const userSlice = createSlice({
@@ -24,23 +27,23 @@ const userSlice = createSlice({
     reducers: {
     },
     extraReducers: (builder) => {
-        builder.addCase(fetchUsers.fulfilled, (state, action) => {
+        builder.addCase(googleUserLogin.fulfilled, (state, action) => {
             state.loading = false;
-            state.users = action.payload;
-            state.error = "";
+            state.entities = { user: action.payload.data };
+            state.errors = [];
         });
 
-        builder.addCase(fetchUsers.rejected, (state, action) => {
+        builder.addCase(googleUserLogin.rejected, (state, action) => {
             state.loading = false;
             state.users = [];
-            state.error = action.error.message;
+            state.errors = action.payload[0].message;
         });
 
-        builder.addCase(fetchUsers.pending, (state, action) => {
+        builder.addCase(googleUserLogin.pending, (state, action) => {
             state.loading = true;
         });
     },
 });
 
-export const { increment } = userSlice.actions;
+export const { } = userSlice.actions;
 export default userSlice.reducer;
