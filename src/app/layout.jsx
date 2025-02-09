@@ -2,6 +2,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import StoreProvider from "@/redux/store/StoreProvider";
 import GoogleAuthProvider from "@/components/custom/GoogleAuthProvider";
+import { Toaster } from "@/components/ui/toaster";
+import AuthProvider from "@/providers/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,8 +27,11 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="antialiased">
         <StoreProvider>
-          <GoogleAuthProvider>{children}</GoogleAuthProvider>
+          <GoogleAuthProvider>
+            <AuthProvider> {children} </AuthProvider>
+          </GoogleAuthProvider>
         </StoreProvider>
+        <Toaster />
       </body>
     </html>
   );
