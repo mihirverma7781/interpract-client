@@ -1,3 +1,4 @@
+import DashboardHeader from "@/components/custom/DashboardHeader";
 import Sidebar from "@/components/custom/Sidebar";
 import React from "react";
 
@@ -8,8 +9,8 @@ const DashboardLayout = ({ children }) => {
         <Sidebar />
       </aside>
       <section className="w-3/4 flex-1 flex flex-col">
-        <header className="h-20 border-b border-gray-100">Header</header>
-        <div className="h-[calc(100vh-80px)] bg-slate-50">{children}</div>
+        <DashboardHeader />
+        <div className="h-[calc(100vh-80px)] bg-slate-50 p-9">{children}</div>
       </section>
     </div>
   );

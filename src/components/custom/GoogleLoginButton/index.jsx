@@ -38,7 +38,6 @@ const GoogleLoginButton = () => {
   useEffect(() => {
     if (!errors.length) {
       if (userData) {
-        console.log("User Data: ", userData);
         toast({
           variant: "success",
           title: "Success",
@@ -55,7 +54,7 @@ const GoogleLoginButton = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: errors[0].message,
+        description: errors[0],
       });
     }
   }, [loading, userData]);

@@ -42,7 +42,7 @@ export const SIDE_BAR_LINKS = [
   {
     id: 4,
     title: "AI Assistant",
-    path: "ai-assistant",
+    path: "/ai-assistant",
     icon: {
       active: AIActive,
       inactive: AIInactive,
@@ -59,7 +59,7 @@ export const SIDE_BAR_LINKS = [
   },
   {
     id: 6,
-    title: "Notes",
+    title: "Your Notes",
     path: "/notes",
     icon: {
       active: NotesActive,

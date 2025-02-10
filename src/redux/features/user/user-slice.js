@@ -21,15 +21,17 @@ export const googleUserLogin = createAsyncThunk(
 
 export const fetchUser = createAsyncThunk(
   "user/fetchUser",
-  async (thunkAPI) => {
+  async (_, thunkAPI) => {
     try {
       const response = await apiInstance.get("/user/me");
       return response.data;
     } catch (error) {
       console.log("[Error | user/fetchUser]: ", error);
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.errors || error.message,
-      );
+      const compiledErrors = error.response?.data?.errors.map((err) => {
+        return err.message;
+      });
+      console.log("Compiled Errors: ", compiledErrors);
+      return thunkAPI.rejectWithValue(compiledErrors);
     }
   },
 );
@@ -84,7 +86,7 @@ const userSlice = createSlice({
 
     builder.addCase(fetchUser.rejected, (state, action) => {
       state.loading = false;
-      state.errors = action.payload || ["An unknown error occurred"];
+      state.errors = action.payload;
     });
 
     builder.addCase(fetchUser.pending, (state, action) => {

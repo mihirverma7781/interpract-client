@@ -9,8 +9,6 @@ import Link from "next/link";
 const SidebarLink = ({ title, icon, path }) => {
   const pathName = usePathname();
 
-  console.log("Pathname:", pathName);
-
   // Conditional class names with hover typo fixed
   const linkClasses = classNames({
     "w-full h-10 py-[10px] px-3 flex items-center gap-2 text-sm": true,
