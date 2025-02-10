@@ -22,7 +22,6 @@ const GoogleLoginButton = () => {
   const responseGoogle = async (authResult) => {
     try {
       if (authResult.code) {
-        console.log("Code acquired => ", JSON.stringify(authResult));
         dispatch(googleUserLogin({ auth_code: authResult.code }));
       }
     } catch (error) {
@@ -37,14 +36,7 @@ const GoogleLoginButton = () => {
   });
 
   useEffect(() => {
-    if (errors.length) {
-      console.log("Errors: ", errors);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: errors[0].message,
-      });
-    } else {
+    if (!errors.length) {
       if (userData) {
         console.log("User Data: ", userData);
         toast({
@@ -58,6 +50,13 @@ const GoogleLoginButton = () => {
           router.push("/dashboard");
         }
       }
+    } else {
+      console.log("Errors: ", errors);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: errors[0].message,
+      });
     }
   }, [loading, userData]);
 

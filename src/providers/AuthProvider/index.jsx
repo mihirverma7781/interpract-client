@@ -17,19 +17,24 @@ const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (errors.length) {
-      router.push("/auth/login");
-    } else {
-      if (userData) {
-        if (!userData.onboarded) {
-          router.push("/onboarding");
-        } else {
-          router.push("/dashboard");
-        }
+    if (userData && !loading) {
+      if (!userData.onboarded) {
+        router.push("/onboarding");
+      } else {
+        router.push("/dashboard");
       }
+    } else {
+      router.push("/auth/signin");
     }
-  }, [userData, loading]);
+  }, [userData]);
   return <>{children}</>;
 };
 
 export default AuthProvider;
+// useEffect(() => {
+//   if (!loading && userData) {
+//     if (userData.onboarded) {
+//       router.push("/dashboard");
+//     }
+//   }
+// }, [loading, userData]);

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -9,6 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import MultiSelect from "@/components/ui/multi-select";
 import { techStackOptions } from "@/constants/tech-stack";
+import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
+import { onboardUser } from "@/redux/features/user/user-slice";
+import { Loader2 } from "lucide-react";
 
 // Your form validation schema with yup
 const formSchema = yup
@@ -19,6 +23,11 @@ const formSchema = yup
   .required();
 
 const OnboardingPage = () => {
+  const userData = useSelector((state) => state.user.entities.user);
+  const loading = useSelector((state) => state.user.loading);
+
+  const dispatch = useDispatch();
+  const router = useRouter();
   const [selectedTech, setSelectedTech] = useState([]);
 
   const {
@@ -35,9 +44,27 @@ const OnboardingPage = () => {
 
   // Handle form submission
   const onSubmit = (data) => {
-    const mergedData = { ...data, techStack: selectedTech };
-    console.log(mergedData);
+    const mergedData = {
+      techStack: selectedTech,
+      jobDescription: data.currentJobRole,
+      experience: data.experience,
+    };
+    try {
+      dispatch(onboardUser(mergedData));
+      router.push("/dashboard");
+    } catch (error) {
+      console.log(error);
+    }
   };
+
+  useEffect(() => {
+    if (!loading && userData) {
+      if (userData.onboarded) {
+        console.log("userData:", userData);
+        router.push("/dashboard");
+      }
+    }
+  }, [loading, userData]);
 
   return (
     <section className="min-h-screen flex justify-center items-center w-full">
@@ -88,8 +115,12 @@ const OnboardingPage = () => {
               {errors.techStack?.message}
             </p>
           </div>
-          <Button className="mt-8  text-white font-semibold py-2 px-4 rounded-lg transition duration-300  active:bg-orange-800">
-            Get Started
+          <Button
+            className="mt-8  text-white font-semibold py-2 px-4 rounded-lg transition duration-300  active:bg-orange-800"
+            disabled={loading}
+          >
+            {loading && <Loader2 className="animate-spin" />}
+            {loading ? "loading..." : "Get Started"}
           </Button>
         </form>
       </div>
