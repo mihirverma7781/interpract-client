@@ -9,7 +9,7 @@ const Sidebar = () => {
       <div>
         <Image src={DashboardLogo} alt="logo" />
       </div>
-      <div className="mt-12 h-auto overflow-y-scroll">
+      <div className="mt-12 h-auto overflow-y-auto">
         {" "}
         <SidebarMenu />
       </div>
