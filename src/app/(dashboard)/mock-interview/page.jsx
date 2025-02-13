@@ -1,10 +1,22 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import DashMainCard from "@/components/custom/DashMainCard";
 import HeroImage from "../../../../public/mock-main.png";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchAllInterviews } from "@/redux/features/interview/interview-slice";
+import InterviewCard from "@/components/custom/InterviewCard";
 
 const MockInterview = () => {
+  const dispatch = useDispatch();
+  const interviews = useSelector((state) => state.interview.interviews);
+  const loading = useSelector((state) => state.interview.loading);
+  useEffect(() => {
+    if (!interviews.length) {
+      dispatch(fetchAllInterviews());
+    }
+  }, []);
+
   const mainClickHandler = () => {
     console.log("Main Button Clicked");
   };
@@ -27,7 +39,28 @@ const MockInterview = () => {
             Manage your hostorical interview data for your betterment{" "}
           </p>
         </div>
-        <div> </div>
+        <div className="mt-10">
+          {loading && !interviews.length ? (
+            <p> Loading...</p>
+          ) : (
+            <div className="grid grid-cols-3 gap-5">
+              {interviews?.map((interviewData) => {
+                return (
+                  <InterviewCard
+                    key={interviewData?.id}
+                    id={interviewData.id}
+                    techStack={interviewData.techStack}
+                    difficulty={interviewData.difficulty}
+                    jobDescription={interviewData.jobDescription}
+                    company={interviewData.company}
+                    experience={interviewData.experience}
+                    dateCreated={interviewData.createdAt}
+                  />
+                );
+              })}{" "}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
