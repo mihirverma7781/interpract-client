@@ -3,7 +3,10 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { use } from "react";
-import { fetchCurrentInterview } from "@/redux/features/interview/interview-slice";
+import {
+  fetchCurrentInterview,
+  resetActiveInterview,
+} from "@/redux/features/interview/interview-slice";
 
 const Interview = ({ params, searchParams }) => {
   const { slug } = use(params);
@@ -18,8 +21,14 @@ const Interview = ({ params, searchParams }) => {
   const errors = useSelector((state) => state.interview.activeInterview.errors);
 
   useEffect(() => {
-    if (!Object.keys(currentInterview).length)
+    if (!currentInterview || !Object.keys(currentInterview).length)
       dispatch(fetchCurrentInterview(slug));
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      dispatch(resetActiveInterview());
+    };
   }, []);
   return <div>Interview ID: {slug} </div>;
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   CheckIcon,
   XCircle,
@@ -61,6 +61,7 @@ const MultiSelect = ({
   placeholder = "Select options",
   animation = 0,
   maxCount = 3,
+  minCount = 1, // New prop for minimum count
   modalPopover = false,
   asChild = false,
   className,
@@ -69,6 +70,7 @@ const MultiSelect = ({
   const [selectedValues, setSelectedValues] = useState(defaultValue);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [error, setError] = useState(""); // For error message
 
   const handleInputKeyDown = (event) => {
     if (event.key === "Enter") {
@@ -92,6 +94,7 @@ const MultiSelect = ({
   const handleClear = () => {
     setSelectedValues([]);
     onValueChange([]);
+    setError(""); // Clear error on clear
   };
 
   const handleTogglePopover = () => {
@@ -113,6 +116,17 @@ const MultiSelect = ({
       onValueChange(allValues);
     }
   };
+
+  // Check if the selected count is below the minCount
+  useEffect(() => {
+    if (selectedValues.length < minCount) {
+      setError(
+        `Please select at least ${minCount} tech${minCount > 1 ? "s" : ""}.`,
+      );
+    } else {
+      setError(""); // Clear error if the condition is met
+    }
+  }, [selectedValues, minCount]);
 
   return (
     <Popover
@@ -287,6 +301,17 @@ const MultiSelect = ({
           </CommandList>
         </Command>
       </PopoverContent>
+
+      {/* Error message */}
+      {error && (
+        <div
+          className="text-red-600 text-xs font-medium"
+          style={{ marginTop: "4px" }}
+        >
+          {error}
+        </div>
+      )}
+
       {animation > 0 && selectedValues.length > 0 && (
         <WandSparkles
           className={cn(

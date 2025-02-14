@@ -1,22 +1,20 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import apiInstance from "../../../utils/axios-instance";
 
-// export const googleUserLogin = createAsyncThunk(
-//   "user/googleLogin",
-//   async (data, thunkAPI) => {
-//     try {
-//       const response = await apiInstance.post("/auth/google", {
-//         auth_code: data.auth_code,
-//       });
+export const createInterview = createAsyncThunk(
+  "interview/createInterview",
+  async (data, thunkAPI) => {
+    try {
+      const response = await apiInstance.post("/interview", data);
 
-//       return response.data;
-//     } catch (error) {
-//       return thunkAPI.rejectWithValue(
-//         error.response?.data?.errors || error.message,
-//       );
-//     }
-//   },
-// );
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.errors || error.message,
+      );
+    }
+  },
+);
 
 export const fetchAllInterviews = createAsyncThunk(
   "interview/fetchAllInterviews",
@@ -61,12 +59,25 @@ const initialState = {
     loading: false,
     errors: [],
   },
+  createInterview: {
+    data: null,
+    loading: false,
+    errors: [],
+  },
 };
 
 const interviewSlice = createSlice({
   name: "interview",
   initialState,
-  reducers: {},
+  reducers: {
+    resetActiveInterview: (state) => {
+      state.activeInterview = {
+        data: null,
+        loading: false,
+        errors: [],
+      };
+    },
+  },
   extraReducers: (builder) => {
     // FETCH ALL INTERVIEWS
     builder.addCase(fetchAllInterviews.fulfilled, (state, action) => {
@@ -99,8 +110,24 @@ const interviewSlice = createSlice({
     builder.addCase(fetchCurrentInterview.pending, (state, action) => {
       state.activeInterview.loading = true;
     });
+
+    // CREATE INTERVIEW
+    builder.addCase(createInterview.fulfilled, (state, action) => {
+      state.createInterview.loading = false;
+      state.createInterview.data = action.payload.data;
+      state.createInterview.errors = [];
+    });
+
+    builder.addCase(createInterview.rejected, (state, action) => {
+      state.createInterview.loading = false;
+      state.createInterview.errors = action.payload;
+    });
+
+    builder.addCase(createInterview.pending, (state, action) => {
+      state.createInterview.loading = true;
+    });
   },
 });
 
-export const {} = interviewSlice.actions;
+export const { resetActiveInterview } = interviewSlice.actions;
 export default interviewSlice.reducer;

@@ -1,8 +1,11 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import MultiSelect from "@/components/ui/multi-select";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,12 +19,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { techStackOptions } from "@/constants/tech-stack";
+import { createInterview } from "@/redux/features/interview/interview-slice";
+import { useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
 
 const formSchema = yup
   .object({
     experience: yup.number().required("Experience needed is required"),
     jobDescription: yup.string().required("Job role is required"),
-    techStack: yup.string().required("Tech stack is required"),
     difficulty: yup
       .string()
       .transform((value) => value.toLowerCase())
@@ -32,6 +38,18 @@ const formSchema = yup
   .required();
 
 const InterviewConfigModal = ({ open, setOpen }) => {
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const createInterviewResponse = useSelector(
+    (state) => state.interview.createInterview.data,
+  );
+
+  const loading = useSelector(
+    (state) => state.interview.createInterview.loading,
+  );
+  const apiErrors = useSelector(
+    (state) => state.interview.createInterview.errors,
+  );
   const [selectedTech, setSelectedTech] = useState([]);
   const {
     handleSubmit,
@@ -42,8 +60,38 @@ const InterviewConfigModal = ({ open, setOpen }) => {
     resolver: yupResolver(formSchema),
     defaultValues: {},
   });
-  const onSubmit = (data) => console.log("Interview Configuration: ", data);
+  const onSubmit = (data) => {
+    try {
+      const selectedTechString = selectedTech.join(", ");
+      const inputObject = {
+        company: data.company,
+        difficulty: data.difficulty,
+        experience: data.experience,
+        jobDescription: data.jobDescription,
+        techStack: selectedTechString,
+      };
 
+      dispatch(createInterview(inputObject));
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
+
+  useEffect(() => {
+    if (!loading && apiErrors.length) {
+      setOpen(false);
+      return;
+    }
+  }, [loading, apiErrors]);
+
+  useEffect(() => {
+    if (
+      createInterviewResponse &&
+      Object.keys(createInterviewResponse).length
+    ) {
+      router.push(`/mock-interview/${createInterviewResponse.id}`);
+    }
+  }, [createInterviewResponse]);
   return (
     <>
       <Dialog open={open} setOpen={setOpen}>
@@ -92,18 +140,15 @@ const InterviewConfigModal = ({ open, setOpen }) => {
 
               {/* tech-stack / requried tech */}
               <div className="flex flex-col gap-[6px]">
-                <Label className="text-sm">
-                  Tech Stack / Reuired Tech for Job
-                </Label>
-                <Input
-                  type="text"
-                  placeholder="Ex. Node.js, React.js"
-                  className="w-full"
-                  {...register("techStack")}
+                <Label className="text-sm">Tech Stack</Label>
+                <MultiSelect
+                  options={techStackOptions}
+                  onValueChange={(data) => setSelectedTech(data)}
+                  placeholder="Select your tech stack"
+                  variant="inverted"
+                  animation={2}
+                  minCount={3}
                 />
-                <p className="text-xs font-medium text-red-600">
-                  {errors.techStack?.message}
-                </p>
               </div>
 
               {/* difficulty level */}
@@ -151,8 +196,10 @@ const InterviewConfigModal = ({ open, setOpen }) => {
                 <Button
                   type="submit"
                   className="bg-orange-500 text-white font-medium"
+                  disabled={loading}
                 >
-                  Start Interview
+                  {loading && <Loader2 className="animate-spin" />}
+                  {loading ? "Generating..." : "Start Interview"}
                 </Button>
               </div>
             </form>

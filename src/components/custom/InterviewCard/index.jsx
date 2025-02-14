@@ -18,7 +18,7 @@ const InterviewCard = ({
   return (
     <div className="flex flex-col rounded-sm">
       <div className="p-5 bg-gray-100 flex flex-col gap-2 rounded-t-lg">
-        <h5 className="text-xl font-bold">{capitalizeCase(jobDescription)}</h5>
+        <h5 className="text-xl font-bold">{jobDescription.toUpperCase()}</h5>
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-gray-600">
             {experience} Years of experience
@@ -42,8 +42,8 @@ const InterviewCard = ({
           <Button variant="outline" className="h-9 font-semibold flex-1">
             Check Feedback
           </Button>
-          <Link href={`/mock-interview/${id}`}>
-            <Button className="h-9 text-white bg-slate-600 font-semibold flex-1 hover:bg-slate-600/90">
+          <Link href={`/mock-interview/${id}`} className="flex flex-1">
+            <Button className="h-9 text-orange-500 border border-orange-500 bg-orange-50 font-semibold flex-1 hover:bg-orange-500/90 hover:text-white">
               Start Interview
             </Button>
           </Link>
