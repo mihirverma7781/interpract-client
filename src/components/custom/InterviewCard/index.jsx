@@ -38,10 +38,12 @@ const InterviewCard = ({
             {capitalizeCase(difficulty)}
           </p>
         </div>
-        <div className="flex items-center gap-5">
-          <Button variant="outline" className="h-9 font-semibold flex-1">
-            Check Feedback
-          </Button>
+        <div className="flex items-center gap-5 flex-1">
+          <Link href={`/mock-interview/${id}/feedback`} className="flex flex-1">
+            <Button variant="outline" className="h-9 font-semibold flex-1">
+              Check Feedback
+            </Button>
+          </Link>
           <Link href={`/mock-interview/${id}`} className="flex flex-1">
             <Button className="h-9 text-orange-500 border border-orange-500 bg-orange-50 font-semibold flex-1 hover:bg-orange-500/90 hover:text-white">
               Start Interview

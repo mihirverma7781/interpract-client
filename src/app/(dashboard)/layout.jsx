@@ -10,7 +10,9 @@ const DashboardLayout = ({ children }) => {
       </aside>
       <section className="w-3/4 flex-1 flex flex-col">
         <DashboardHeader />
-        <div className="h-[calc(100vh-80px)] bg-slate-50 p-9">{children}</div>
+        <div className="h-[calc(100vh-80px)] bg-slate-50 p-9 overflow-y-auto">
+          {children}
+        </div>
       </section>
     </div>
   );
