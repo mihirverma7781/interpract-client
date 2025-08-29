@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import moment from "moment";
 
 const StartInterview = ({ params, searchParams }) => {
   const { slug } = use(params);
@@ -21,11 +22,14 @@ const StartInterview = ({ params, searchParams }) => {
 
   const [activeQuestion, setActiveQuestion] = useState(0);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [startTime, setStarTime] = useState(moment.now());
+  const [endTime, setEndTime] = useState(null);
+
   const currentInterview = useSelector(
-    (state) => state.interview.activeInterview.data,
+    (state) => state.interview.activeInterview.data
   );
   const loading = useSelector(
-    (state) => state.interview.activeInterview.loading,
+    (state) => state.interview.activeInterview.loading
   );
   const errors = useSelector((state) => state.interview.activeInterview.errors);
   const userData = useSelector((state) => state.user.entities.user);
@@ -33,21 +37,45 @@ const StartInterview = ({ params, searchParams }) => {
   const allAnswers = useSelector((state) => state.answer.answers);
   const answersLoading = useSelector((state) => state.answer.loading);
 
+  const endInterviewHandler = () => {
+    setEndTime(moment.now());
+  };
+
+  const beforeUnloadHandler = (event) => {
+    event.preventDefault();
+    return (event.returnValue =
+      "Your interview will be submitted. Sure want to exit?");
+  };
+
   useEffect(() => {
     if (!currentInterview || !Object.keys(currentInterview).length) {
       dispatch(fetchCurrentInterview(slug));
     }
   }, [slug, dispatch, currentInterview]);
 
+  // Reset active interview
   useEffect(() => {
     return () => {
       dispatch(resetActiveInterview());
     };
   }, []);
 
+  // Fetch Answers
   useEffect(() => {
     dispatch(fetchAllAnswers({ id: slug }));
   }, [saveLoading]);
+
+  // Before unload event
+  useEffect(() => {
+    window.addEventListener("beforeunload", beforeUnloadHandler, {
+      capture: true,
+    });
+
+    return () =>
+      window.removeEventListener("beforeunload", beforeUnloadHandler, {
+        capture: true,
+      });
+  },[]);
 
   if (loading || !currentInterview?.content?.length) {
     return <div> Loading... </div>;
@@ -85,7 +113,7 @@ const StartInterview = ({ params, searchParams }) => {
             <ArrowLeft /> Prev
           </Button>
         ) : null}
-        {activeQuestion < currentInterview?.content?.length ? (
+        {activeQuestion < currentInterview?.content?.length - 1 ? (
           <Button
             onClick={() => setActiveQuestion((prevCount) => prevCount + 1)}
           >
@@ -95,7 +123,9 @@ const StartInterview = ({ params, searchParams }) => {
         {activeQuestion === currentInterview?.content?.length - 1 ? (
           <Link href={`/mock-interview/${slug}/feedback`}>
             {" "}
-            <Button className="bg-red-500">End Interview</Button>{" "}
+            <Button className="bg-red-500 hover:bg-red-600">
+              End Interview
+            </Button>{" "}
           </Link>
         ) : null}
       </div>

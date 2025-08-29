@@ -36,7 +36,7 @@ const GoogleLoginButton = () => {
   });
 
   useEffect(() => {
-    if (!errors.length) {
+    if (!errors?.length) {
       if (userData) {
         toast({
           variant: "success",

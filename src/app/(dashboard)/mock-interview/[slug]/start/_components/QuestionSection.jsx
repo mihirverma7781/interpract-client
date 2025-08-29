@@ -55,7 +55,7 @@ const QuestionSection = ({
           ))}
       </div>
 
-      <div className="mt-10 bg-white p-4 rounded-lg">
+      <div className="mt-5 bg-white p-4 rounded-lg">
         <h2 className="font-medium leading-7 tracking-normal">
           {" "}
           <span className="font-bold text-orange-500 flex gap-2 items-center ">

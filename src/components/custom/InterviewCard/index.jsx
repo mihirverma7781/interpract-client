@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import moment from "moment/moment";
 import { Button } from "@/components/ui/button";
 import { capitalizeCase } from "@/utils/utility-functions";
@@ -15,6 +15,31 @@ const InterviewCard = ({
   experience,
   dateCreated,
 }) => {
+  const [estimatedTime, setEstimatedTime] = useState(null);
+
+  const estimatedTimeCalc = (difficulty) => {
+    switch (difficulty) {
+      case "easy":
+        setEstimatedTime(30);
+        break;
+      case "medium":
+        setEstimatedTime(45);
+        break;
+      case "hard":
+        setEstimatedTime(60);
+        break;
+      default:
+        setEstimatedTime(30);
+        break;
+    }
+  };
+
+  useEffect(() => {
+    if (difficulty) {
+      estimatedTimeCalc(difficulty);
+    }
+  }, [difficulty]);
+
   return (
     <div className="flex flex-col rounded-sm">
       <div className="p-5 bg-gray-100 flex flex-col gap-2 rounded-t-lg">
@@ -23,7 +48,9 @@ const InterviewCard = ({
           <p className="text-sm font-semibold text-gray-600">
             {experience} Years of experience
           </p>{" "}
-          <p className="text-sm font-semibold text-gray-600">30 mins left</p>
+          <p className="text-sm font-semibold text-gray-600">
+            Estimated Time: {estimatedTime} mins
+          </p>
         </div>
       </div>
 

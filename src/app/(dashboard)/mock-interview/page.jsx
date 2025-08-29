@@ -1,25 +1,30 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import DashMainCard from "@/components/custom/DashMainCard";
 import HeroImage from "../../../../public/mock-main.png";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchAllInterviews } from "@/redux/features/interview/interview-slice";
 import InterviewCard from "@/components/custom/InterviewCard";
+import InterviewConfigModal from "@/components/custom/InterviewConfigModal";
 
 const MockInterview = () => {
   const dispatch = useDispatch();
   const interviews = useSelector((state) => state.interview.interviews);
   const loading = useSelector((state) => state.interview.loading);
+
+  const [openModal, setOpenModal] = useState(false);
+
   useEffect(() => {
     if (!interviews.length) {
       dispatch(fetchAllInterviews());
     }
   }, []);
 
-  const mainClickHandler = () => {
-    console.log("Main Button Clicked");
+  const modalHandler = () => {
+    setOpenModal(true);
   };
+
   return (
     <div>
       <DashMainCard
@@ -28,10 +33,10 @@ const MockInterview = () => {
           "Maximize your chances of success by taking a mock interview. This will allow you to pinpoint areas needing more study, refine your test-taking strategies, and build confidence before the real interview."
         }
         mainBtnText={"Start Mock Interview"}
-        mainClickHandler={mainClickHandler}
+        mainClickHandler={modalHandler}
         ImageUrl={HeroImage}
       />
-
+      <InterviewConfigModal open={openModal} setOpen={setOpenModal} />
       <div className="flex flex-col w-full mt-9">
         <div className="flex flex-col gap-1">
           <h6 className="font-semibold text-base">Interview History </h6>

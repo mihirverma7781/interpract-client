@@ -13,10 +13,25 @@ export const googleUserLogin = createAsyncThunk(
       return response.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(
-        error.response?.data?.errors || error.message,
+        error.response?.data?.errors || error.message
       );
     }
-  },
+  }
+);
+
+export const logoutUser = createAsyncThunk(
+  "user/logout",
+  async (_, thunkAPI) => {
+    try {
+      const response = await apiInstance.post("/auth/logout");
+      return response.data;
+    } catch (error) {
+      console.log("[Error | user/logoutUser]: ", error);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.errors || error.message
+      );
+    }
+  }
 );
 
 export const fetchUser = createAsyncThunk(
@@ -33,7 +48,7 @@ export const fetchUser = createAsyncThunk(
       console.log("Compiled Errors: ", compiledErrors);
       return thunkAPI.rejectWithValue(compiledErrors);
     }
-  },
+  }
 );
 
 export const onboardUser = createAsyncThunk(
@@ -45,10 +60,10 @@ export const onboardUser = createAsyncThunk(
     } catch (error) {
       console.log("[Error | user/onboardUser]: ", error);
       return thunkAPI.rejectWithValue(
-        error.response?.data?.errors || error.message,
+        error.response?.data?.errors || error.message
       );
     }
-  },
+  }
 );
 
 const initialState = {
@@ -74,6 +89,22 @@ const userSlice = createSlice({
     });
 
     builder.addCase(googleUserLogin.pending, (state, action) => {
+      state.loading = true;
+    });
+
+    // LOGOUT USER
+    builder.addCase(logoutUser.fulfilled, (state, action) => {
+      state.loading = false;
+      state.entities = {};
+      state.errors = {};
+    });
+
+    builder.addCase(logoutUser.rejected, (state, action) => {
+      state.loading = false;
+      state.errors = action.payload || ["An unknown error occurred"];
+    });
+
+    builder.addCase(logoutUser.pending, (state, action) => {
       state.loading = true;
     });
 
