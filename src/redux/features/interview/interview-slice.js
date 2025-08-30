@@ -10,10 +10,27 @@ export const createInterview = createAsyncThunk(
       return response.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(
-        error.response?.data?.errors || error.message,
+        error.response?.data?.errors || error.message
       );
     }
-  },
+  }
+);
+
+export const updateDuration = createAsyncThunk(
+  "interview/updateDuration",
+  async (data, thunkAPI) => {
+    try {
+      const response = await apiInstance.patch(
+        `/interview/duration/${data.id}`,
+        data.input
+      );
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.errors || error.message
+      );
+    }
+  }
 );
 
 export const fetchAllInterviews = createAsyncThunk(
@@ -30,7 +47,7 @@ export const fetchAllInterviews = createAsyncThunk(
       console.log("Compiled Errors: ", compiledErrors);
       return thunkAPI.rejectWithValue(compiledErrors);
     }
-  },
+  }
 );
 
 export const fetchCurrentInterview = createAsyncThunk(
@@ -47,7 +64,7 @@ export const fetchCurrentInterview = createAsyncThunk(
       console.log("Compiled Errors: ", compiledErrors);
       return thunkAPI.rejectWithValue(compiledErrors);
     }
-  },
+  }
 );
 
 const initialState = {

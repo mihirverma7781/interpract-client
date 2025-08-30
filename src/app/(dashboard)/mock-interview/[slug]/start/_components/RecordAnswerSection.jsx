@@ -1,16 +1,15 @@
 "use client";
-
 import { useDispatch } from "react-redux";
 import { Button } from "@/components/ui/button";
 import { MicIcon } from "lucide-react";
 import { StopCircleIcon } from "lucide-react";
 import { WebcamIcon } from "lucide-react";
-import { useEffect, useState } from "react";
-import useSpeechToText from "react-hook-speech-to-text";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Webcam from "react-webcam";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle } from "lucide-react";
 import { saveAnswer } from "@/redux/features/answer/answer-slice";
+import InterviewTimer from "@/components/custom/InterviewTimer";
 
 const RecordAnswerSection = ({
   questions,
@@ -18,70 +17,257 @@ const RecordAnswerSection = ({
   answers,
   interviewId,
   setSaveLoading,
+  elapsed,
+  setElapsed
 }) => {
   const { toast } = useToast();
   const dispatch = useDispatch();
-  const {
-    error,
-    interimResult,
-    isRecording,
-    results,
-    startSpeechToText,
-    stopSpeechToText,
-  } = useSpeechToText({
-    continuous: true,
-    useLegacyResults: false,
-  });
 
+  // Manual speech recognition state management
+  const [isRecording, setIsRecording] = useState(false);
   const [userAnswer, setUserAnswer] = useState("");
+  const [interimResult, setInterimResult] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  useEffect(() => {
-    results.map((result) => {
-      setUserAnswer((prevAns) => prevAns + result?.transcript);
-    });
-  }, [results]);
+  const recognitionRef = useRef(null);
+  const isInitializingRef = useRef(false);
+  const webcamRef = useRef(null);
+  const lastVideoTimeRef = useRef(-1);
 
-  const saveUserAnswer = async () => {
-    if (isRecording) {
-      stopSpeechToText();
-      if (!userAnswer || userAnswer.length < 10) {
-        toast({
-          title: "Error",
-          description: "Answer is to short. Please record again!",
-        });
+  // Initialize speech recognition
+  const initializeRecognition = useCallback(() => {
+    if (
+      !("webkitSpeechRecognition" in window) &&
+      !("SpeechRecognition" in window)
+    ) {
+      toast({
+        title: "Error",
+        description: "Speech recognition not supported in this browser.",
+      });
+      return null;
+    }
+
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      console.log("Speech recognition started");
+      setIsRecording(true);
+      isInitializingRef.current = false;
+    };
+
+    recognition.onresult = (event) => {
+      let interim = "";
+      let final = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i].transcript;
+        if (event.results[i].isFinal) {
+          final += transcript + " ";
+        } else {
+          interim += transcript;
+        }
+      }
+
+      if (final) {
+        setUserAnswer((prev) => prev + final);
+      }
+      setInterimResult(interim);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error:", event.error);
+      setIsRecording(false);
+      isInitializingRef.current = false;
+
+      if (event.error === "aborted") {
+        // This is expected when we manually stop
         return;
-      } else {
-        // Save answer to the database
+      }
+
+      toast({
+        title: "Speech Recognition Error",
+        description: `Error: ${event.error}. Please try again.`,
+      });
+    };
+
+    recognition.onend = () => {
+      console.log("Speech recognition ended");
+      setIsRecording(false);
+      setInterimResult("");
+      isInitializingRef.current = false;
+    };
+
+    return recognition;
+  }, [toast]);
+
+  // Force stop any existing recognition
+  const forceStopRecognition = useCallback(() => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch (error) {
+        console.log("Error aborting recognition:", error);
+      }
+      recognitionRef.current = null;
+    }
+    setIsRecording(false);
+    setInterimResult("");
+    isInitializingRef.current = false;
+  }, []);
+
+  // Start recording
+  const startRecording = useCallback(async () => {
+    if (isInitializingRef.current || isRecording) {
+      console.log("Already recording or initializing");
+      return;
+    }
+
+    try {
+      // Force stop any existing recognition
+      forceStopRecognition();
+
+      // Wait a moment for cleanup
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      isInitializingRef.current = true;
+      const recognition = initializeRecognition();
+
+      if (!recognition) {
+        isInitializingRef.current = false;
+        return;
+      }
+
+      recognitionRef.current = recognition;
+      setUserAnswer("");
+      setInterimResult("");
+
+      recognition.start();
+    } catch (error) {
+      console.error("Failed to start recording:", error);
+      isInitializingRef.current = false;
+      setIsRecording(false);
+      toast({
+        title: "Error",
+        description: "Failed to start recording. Please try again.",
+      });
+    }
+  }, [isRecording, forceStopRecognition, initializeRecognition, toast]);
+
+  // Stop recording
+  const stopRecording = useCallback(() => {
+    if (recognitionRef.current && isRecording) {
+      try {
+        recognitionRef.current.stop();
+      } catch (error) {
+        console.log("Error stopping recognition:", error);
+        forceStopRecognition();
+      }
+    }
+  }, [isRecording, forceStopRecognition]);
+
+  // Main function to handle recording toggle and saving
+  const handleRecordingAction = useCallback(async () => {
+    if (isProcessing) return;
+
+    setIsProcessing(true);
+
+    try {
+      if (isRecording) {
+        // Stop recording and save
+        stopRecording();
+
+        // Wait for recording to stop
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        const finalAnswer = userAnswer.trim();
+        if (!finalAnswer || finalAnswer.length < 10) {
+          toast({
+            title: "Error",
+            description: "Answer is too short. Please record again!",
+          });
+          setIsProcessing(false);
+          return;
+        }
+
+        // Save answer to database
+        setSaveLoading(true);
         await dispatch(
           saveAnswer({
             questionId: activeQuestion + 1,
-            userAnswer: userAnswer,
+            userAnswer: finalAnswer,
             correctAnswer: questions[activeQuestion]?.answer,
             question: questions[activeQuestion]?.question,
             interviewId: interviewId,
-          }),
-        ).finally(() => {
-          setSaveLoading((prev) => !prev);
+          })
+        );
+        setSaveLoading(false);
+
+        toast({
+          title: "Success",
+          description: "Answer saved successfully!",
         });
-        setUserAnswer(null);
+      } else {
+        // Start recording
+        await startRecording();
       }
-    } else {
-      startSpeechToText();
+    } catch (error) {
+      console.error("Recording action error:", error);
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+      });
+      setSaveLoading(false);
+    } finally {
+      setIsProcessing(false);
     }
-  };
+  }, [
+    isProcessing,
+    isRecording,
+    userAnswer,
+    activeQuestion,
+    questions,
+    interviewId,
+    dispatch,
+    toast,
+    setSaveLoading,
+    stopRecording,
+    startRecording,
+  ]);
+
+  // Cleanup when question changes
+  useEffect(() => {
+    forceStopRecognition();
+    setUserAnswer("");
+  }, [activeQuestion, forceStopRecognition]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      forceStopRecognition();
+    };
+  }, [forceStopRecognition]);
 
   const checkIfAnswered = () => {
-    console.log("active", activeQuestion);
     return answers?.filter(
-      (answer) => answer?.questionId == activeQuestion + 1,
+      (answer) => answer?.questionId == activeQuestion + 1
     );
   };
 
   return (
     <div>
-      <div className=" relative flex flex-col justify-center items-center bg-gray-100 rounded-xl p-5 py-10">
-        <WebcamIcon className="absolute  h-52 w-52 text-gray-500" />
+      <InterviewTimer elapsed={elapsed} setElapsed={setElapsed} />
+
+      <div className="relative flex flex-col justify-center items-center bg-gray-100 rounded-2xl px-5 py-7">
+        <WebcamIcon className="absolute h-52 w-52 text-gray-500" />
         <Webcam
+          ref={webcamRef}
           style={{
             height: "auto",
             minHeight: 300,
@@ -92,13 +278,28 @@ const RecordAnswerSection = ({
           }}
         />
       </div>
+
+      {/* Display current transcript */}
+      {(userAnswer || interimResult) && (
+        <div className="mt-4 p-3 bg-gray-50 rounded-lg border">
+          <p className="text-sm text-gray-600 mb-2">Current Answer:</p>
+          <p className="text-gray-800">
+            {userAnswer}
+            {interimResult && (
+              <span className="text-blue-600 italic">{interimResult}</span>
+            )}
+          </p>
+        </div>
+      )}
+
       <div className="flex mt-4 flex-1">
         {answers?.length && checkIfAnswered().length > 0 ? (
           <Button
             variant="outline"
             className="border-green-500 text-green-500 hover:text-green-600 hover:border-green-600 hover:bg-green-100 mx-auto"
+            disabled
           >
-            <CheckCircle /> Answered
+            <CheckCircle className="w-4 h-4 mr-2" /> Answered
           </Button>
         ) : (
           <Button
@@ -106,18 +307,25 @@ const RecordAnswerSection = ({
             className={
               isRecording
                 ? `border-red-500 text-red-500 hover:text-red-600 hover:border-red-600 hover:bg-red-100 mx-auto animate-pulse`
-                : `border-gray-500 text-gray-500 hover:text-gray-600 hover:border-gray-600 hover:bg-gray-100 mx-auto`
+                : `border-blue-500 text-blue-500 hover:text-blue-600 hover:border-blue-600 hover:bg-blue-100 mx-auto`
             }
-            onClick={saveUserAnswer}
+            onClick={handleRecordingAction}
+            disabled={isProcessing || isInitializingRef.current}
           >
-            {isRecording ? (
+            {isProcessing ? (
               <>
-                {" "}
-                <StopCircleIcon /> <span> Stop Recording </span>
+                <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
+                <span>Processing...</span>
+              </>
+            ) : isRecording ? (
+              <>
+                <StopCircleIcon className="w-4 h-4 mr-2" />
+                <span>Stop & Save</span>
               </>
             ) : (
               <>
-                <MicIcon className="w-4 h-4" /> <span>Record Answer </span>{" "}
+                <MicIcon className="w-4 h-4 mr-2" />
+                <span>Record Answer</span>
               </>
             )}
           </Button>

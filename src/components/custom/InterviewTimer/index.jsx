@@ -1,15 +1,13 @@
 "use client";
 import React, { useEffect, useState } from "react";
 
-const InterviewTimer = () => {
-  const [elapsed, setElapsed] = useState(0); // store total seconds
-
+const InterviewTimer = ({ elapsed, setElapsed }) => {
   useEffect(() => {
     const clock = setInterval(() => {
       setElapsed((prev) => prev + 1);
     }, 1000);
 
-    return () => clearInterval(clock); 
+    return () => clearInterval(clock);
   }, []);
 
   const hr = Math.floor(elapsed / 3600);

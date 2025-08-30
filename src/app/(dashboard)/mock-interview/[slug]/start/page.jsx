@@ -3,8 +3,9 @@
 import {
   fetchCurrentInterview,
   resetActiveInterview,
+  updateDuration,
 } from "@/redux/features/interview/interview-slice";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import QuestionSection from "./_components/QuestionSection";
@@ -14,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import moment from "moment";
+import moment, { duration } from "moment";
 
 const StartInterview = ({ params, searchParams }) => {
   const { slug } = use(params);
@@ -22,8 +23,8 @@ const StartInterview = ({ params, searchParams }) => {
 
   const [activeQuestion, setActiveQuestion] = useState(0);
   const [saveLoading, setSaveLoading] = useState(false);
-  const [startTime, setStarTime] = useState(moment.now());
-  const [endTime, setEndTime] = useState(null);
+  const [elapsed, setElapsed] = useState(0);
+  const timeRef = useRef(0);
 
   const currentInterview = useSelector(
     (state) => state.interview.activeInterview.data
@@ -43,6 +44,14 @@ const StartInterview = ({ params, searchParams }) => {
 
   const beforeUnloadHandler = (event) => {
     event.preventDefault();
+    const data = {
+      id: slug,
+      input: {
+        timeTaken: timeRef.current,
+        attempted: false,
+      },
+    };
+    dispatch(updateDuration(data));
     return (event.returnValue =
       "Your interview will be submitted. Sure want to exit?");
   };
@@ -75,7 +84,11 @@ const StartInterview = ({ params, searchParams }) => {
       window.removeEventListener("beforeunload", beforeUnloadHandler, {
         capture: true,
       });
-  },[]);
+  }, [slug, currentInterview]);
+
+  useEffect(() => {
+    timeRef.current = elapsed;
+  }, [elapsed]);
 
   if (loading || !currentInterview?.content?.length) {
     return <div> Loading... </div>;
@@ -100,6 +113,8 @@ const StartInterview = ({ params, searchParams }) => {
             answers={allAnswers}
             interviewId={slug}
             setSaveLoading={setSaveLoading}
+            elapsed={elapsed}
+            setElapsed={setElapsed}
           />
         </section>
       </div>
