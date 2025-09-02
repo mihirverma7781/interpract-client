@@ -14,6 +14,8 @@ const InterviewCard = ({
   company,
   experience,
   dateCreated,
+  attempted,
+  duration
 }) => {
   const [estimatedTime, setEstimatedTime] = useState(null);
 
@@ -71,11 +73,11 @@ const InterviewCard = ({
               Check Feedback
             </Button>
           </Link>
-          <Link href={`/mock-interview/${id}`} className="flex flex-1">
+         {!attempted && <Link href={`/mock-interview/${id}`} className="flex flex-1">
             <Button className="h-9 text-orange-500 border border-orange-500 bg-orange-50 font-semibold flex-1 hover:bg-orange-500/90 hover:text-white">
               Start Interview
             </Button>
-          </Link>
+          </Link>}
         </div>
       </div>
     </div>

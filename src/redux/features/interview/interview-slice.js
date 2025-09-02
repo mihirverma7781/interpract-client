@@ -81,6 +81,11 @@ const initialState = {
     loading: false,
     errors: [],
   },
+  updateDuration: {
+    data: null,
+    loading: false,
+    errors: [],
+  },
 };
 
 const interviewSlice = createSlice({
@@ -126,6 +131,28 @@ const interviewSlice = createSlice({
 
     builder.addCase(fetchCurrentInterview.pending, (state, action) => {
       state.activeInterview.loading = true;
+    });
+
+    // UPDATE CURRENT INTERVIEW DURATION
+    builder.addCase(updateDuration.fulfilled, (state, action) => {
+      state.activeInterview.loading = false;
+      state.updateDuration.loading = false;
+      state.activeInterview.data = action.payload.data;
+      state.updateDuration.data = action.payload.data;
+      state.activeInterview.errors = [];
+      state.updateDuration.errors = [];
+    });
+
+    builder.addCase(updateDuration.rejected, (state, action) => {
+      state.activeInterview.loading = false;
+      state.updateDuration.loading = false;
+      state.activeInterview.errors = action.payload;
+      state.updateDuration.errors = action.payload;
+    });
+
+    builder.addCase(updateDuration.pending, (state, action) => {
+      state.activeInterview.loading = true;
+      state.updateDuration.loading = true;
     });
 
     // CREATE INTERVIEW

@@ -15,11 +15,14 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import moment, { duration } from "moment";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 const StartInterview = ({ params, searchParams }) => {
   const { slug } = use(params);
   const dispatch = useDispatch();
+  const router = useRouter();
+  const { toast } = useToast();
 
   const [activeQuestion, setActiveQuestion] = useState(0);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -29,18 +32,20 @@ const StartInterview = ({ params, searchParams }) => {
   const currentInterview = useSelector(
     (state) => state.interview.activeInterview.data
   );
+
+  const updateDurationData = useSelector(
+    (state) => state.interview.updateDuration
+  );
+
   const loading = useSelector(
     (state) => state.interview.activeInterview.loading
   );
+
   const errors = useSelector((state) => state.interview.activeInterview.errors);
   const userData = useSelector((state) => state.user.entities.user);
 
   const allAnswers = useSelector((state) => state.answer.answers);
   const answersLoading = useSelector((state) => state.answer.loading);
-
-  const endInterviewHandler = () => {
-    setEndTime(moment.now());
-  };
 
   const beforeUnloadHandler = (event) => {
     event.preventDefault();
@@ -56,6 +61,28 @@ const StartInterview = ({ params, searchParams }) => {
       "Your interview will be submitted. Sure want to exit?");
   };
 
+  const endInterviewHandler = async (event) => {
+    event.preventDefault();
+
+    const data = {
+      id: slug,
+      input: {
+        timeTaken: timeRef.current,
+        attempted: true,
+      },
+    };
+
+    dispatch(updateDuration(data));
+  };
+
+  // redirect if already attempted
+  useEffect(()=> {
+    if(currentInterview?.attempted) {
+      router.push("/mock-interview");
+    }
+  },[currentInterview])
+
+  // Fetch current interview
   useEffect(() => {
     if (!currentInterview || !Object.keys(currentInterview).length) {
       dispatch(fetchCurrentInterview(slug));
@@ -90,7 +117,29 @@ const StartInterview = ({ params, searchParams }) => {
     timeRef.current = elapsed;
   }, [elapsed]);
 
-  if (loading || !currentInterview?.content?.length) {
+  useEffect(() => {
+    console.log("useeffeccttt triggereddddd")
+    if(!updateDurationData?.errors?.length) {
+      if(updateDurationData?.data) {
+        toast({
+          variant: "success",
+          title: "Inteview Ended",
+          description: "Interview attempted successfully",
+        });
+
+        router.push("/mock-interview");
+      }
+    } else {
+      console.log("Errors: ", errors);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: errors[0],
+      });
+    }
+  }, [updateDurationData?.data, updateDurationData?.loading]);
+
+  if (loading || !currentInterview?.content?.length || currentInterview?.attempted) {
     return <div> Loading... </div>;
   }
 
@@ -138,7 +187,10 @@ const StartInterview = ({ params, searchParams }) => {
         {activeQuestion === currentInterview?.content?.length - 1 ? (
           <Link href={`/mock-interview/${slug}/feedback`}>
             {" "}
-            <Button className="bg-red-500 hover:bg-red-600">
+            <Button
+              onClick={endInterviewHandler}
+              className="bg-red-500 hover:bg-red-600"
+            >
               End Interview
             </Button>{" "}
           </Link>

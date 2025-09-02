@@ -63,21 +63,45 @@ const RecordAnswerSection = ({
     };
 
     recognition.onresult = (event) => {
+      console.log("Speech recognition result event:", event);
       let interim = "";
       let final = "";
 
+      // Check if event.results exists and has length
+      if (!event.results || event.results.length === 0) {
+        console.log("No results in speech event");
+        return;
+      }
+
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i].transcript;
-        if (event.results[i].isFinal) {
+        const result = event.results[i];
+        
+        // Check if result exists and has transcript
+        if (!result || !result[0] || typeof result[0].transcript !== 'string') {
+          console.log("Invalid result structure at index", i);
+          continue;
+        }
+        
+        const transcript = result[0].transcript;
+        
+        if (result.isFinal) {
           final += transcript + " ";
         } else {
           interim += transcript;
         }
       }
 
-      if (final) {
-        setUserAnswer((prev) => prev + final);
+      console.log("Final transcript:", final);
+      console.log("Interim transcript:", interim);
+
+      if (final.trim()) {
+        setUserAnswer((prev) => {
+          const newAnswer = (prev || "") + final;
+          console.log("Updated answer:", newAnswer);
+          return newAnswer;
+        });
       }
+      
       setInterimResult(interim);
     };
 
@@ -91,9 +115,28 @@ const RecordAnswerSection = ({
         return;
       }
 
+      // Handle specific error cases
+      let errorMessage = "Please try again.";
+      switch (event.error) {
+        case "no-speech":
+          errorMessage = "No speech detected. Please speak clearly and try again.";
+          break;
+        case "audio-capture":
+          errorMessage = "Microphone access denied. Please allow microphone access.";
+          break;
+        case "not-allowed":
+          errorMessage = "Microphone permission denied. Please enable microphone access.";
+          break;
+        case "network":
+          errorMessage = "Network error. Please check your connection and try again.";
+          break;
+        default:
+          errorMessage = `Error: ${event.error}. Please try again.`;
+      }
+
       toast({
         title: "Speech Recognition Error",
-        description: `Error: ${event.error}. Please try again.`,
+        description: errorMessage,
       });
     };
 
@@ -130,6 +173,18 @@ const RecordAnswerSection = ({
     }
 
     try {
+      // Request microphone permission first
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (permissionError) {
+        console.error("Microphone permission denied:", permissionError);
+        toast({
+          title: "Microphone Access Required",
+          description: "Please allow microphone access to record your answer.",
+        });
+        return;
+      }
+
       // Force stop any existing recognition
       forceStopRecognition();
 
@@ -186,7 +241,10 @@ const RecordAnswerSection = ({
         // Wait for recording to stop
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        const finalAnswer = userAnswer.trim();
+        const finalAnswer = (userAnswer || "").trim();
+        
+        console.log("Final answer to save:", finalAnswer);
+        
         if (!finalAnswer || finalAnswer.length < 10) {
           toast({
             title: "Error",
@@ -196,17 +254,29 @@ const RecordAnswerSection = ({
           return;
         }
 
+        // Validate required data before saving
+        if (!questions || !questions[activeQuestion]) {
+          toast({
+            title: "Error",
+            description: "Question data not available. Please refresh and try again.",
+          });
+          setIsProcessing(false);
+          return;
+        }
+
         // Save answer to database
         setSaveLoading(true);
-        await dispatch(
-          saveAnswer({
-            questionId: activeQuestion + 1,
-            userAnswer: finalAnswer,
-            correctAnswer: questions[activeQuestion]?.answer,
-            question: questions[activeQuestion]?.question,
-            interviewId: interviewId,
-          })
-        );
+        const saveData = {
+          questionId: activeQuestion + 1,
+          userAnswer: finalAnswer,
+          correctAnswer: questions[activeQuestion]?.answer || "",
+          question: questions[activeQuestion]?.question || "",
+          interviewId: interviewId,
+        };
+        
+        console.log("Saving answer with data:", saveData);
+        
+        await dispatch(saveAnswer(saveData));
         setSaveLoading(false);
 
         toast({

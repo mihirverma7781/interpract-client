@@ -54,6 +54,8 @@ const MockInterview = () => {
                   <InterviewCard
                     key={interviewData?.id}
                     id={interviewData.id}
+                    attempted={interviewData.attempted}
+                    duration={interviewData.timeTaken}
                     techStack={interviewData.techStack}
                     difficulty={interviewData.difficulty}
                     jobDescription={interviewData.jobDescription}
